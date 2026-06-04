@@ -1,0 +1,39 @@
+# Research Paper Chat Bot - Requirements
+# Python 3.9+
+# Generated: 2026-06-04
+
+# Core RAG Components
+chromadb>=0.4.0          # Vector store and embedding persistence
+sentence-transformers>=2.2.0  # Text embedding generation (all-MiniLM-L6-v2)
+transformers>=4.30.0     # LLM inference and models
+torch>=2.0.0            # PyTorch dependency for transformers
+
+# PDF Processing
+PyMuPDF>=1.23.0         # PDF text extraction (fitz)
+
+# Utilities
+numpy>=1.21.0           # Numerical operations
+requests>=2.28.0        # HTTP requests for model downloads
+
+# Optional: Web Interface
+# Uncomment if using Streamlit web app
+# streamlit>=1.25.0       # Web UI framework
+# streamlit-chat>=0.1.1   # Chat UI components
+
+# Optional: CLI Framework
+# Uncomment if using CLI interface
+# click>=8.1.0            # Command-line interface creation
+
+# Development & Testing (Optional)
+# pytest>=7.0.0           # Testing framework
+# pytest-cov>=4.0.0       # Code coverage
+# black>=23.0.0           # Code formatting
+# flake8>=6.0.0           # Linting
+# mypy>=1.0.0             # Type checking
+# isort>=5.12.0           # Import sorting
+
+# Note on versions:
+# - Versions are intentionally permissive (>=) to allow updates
+# - For production, pin specific versions after testing
+# - GPU support: Replace torch with torch[cuda] if using CUDA
+# - Apple Silicon: Use pytorch-nightly for M1/M2 support

@@ -1,0 +1,332 @@
+# Research Paper Chat Bot - .gitignore
+# Git ignore rules for Python project
+
+# ============================================================================
+# VIRTUAL ENVIRONMENTS
+# ============================================================================
+venv/
+.venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Poetry virtual environment
+poetry.lock
+pyproject.toml.lock
+
+# Conda environments
+conda-env.yml
+environment-lock.yml
+
+# ============================================================================
+# PYTHON CACHE & COMPILED FILES
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.c
+*.so
+*.o
+*.a
+*.dylib
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============================================================================
+# IDE & EDITOR CONFIGURATIONS
+# ============================================================================
+
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+.vscode-test
+
+# PyCharm
+.idea/
+*.iml
+.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.swp
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Visual Studio
+.vs/
+.vsconfig
+
+# ============================================================================
+# ENVIRONMENT & CONFIGURATION FILES (SECRET)
+# ============================================================================
+.env
+.env.local
+.env.*.local
+.env.production.local
+!.env.example
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+.TemporaryItems
+
+# ============================================================================
+# DATA ARTIFACTS & VECTOR STORE (DO NOT COMMIT)
+# ============================================================================
+
+# ChromaDB vector store artifacts
+data/vector_store/
+data/vector_store/**
+chroma.sqlite3
+chroma-*.db
+
+# Extracted text files (regenerable)
+data/extracted_text/
+data/chunks/
+
+# Large files
+*.pdf
+data/input_pdfs/
+!data/input_pdfs/.gitkeep
+
+# ============================================================================
+# LOGS & TEMPORARY FILES
+# ============================================================================
+*.log
+*.log.*
+logs/
+tmp/
+temp/
+*.tmp
+.cache/
+.tmp/
+
+# pytest
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+htmlcov/
+
+# Coverage reports
+htmlcov/
+.coverage*
+.coverage
+coverage.xml
+*.cover
+
+# ============================================================================
+# JUPYTER NOTEBOOKS
+# ============================================================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.jupyter/
+*.ipynb
+
+# ============================================================================
+# DEPENDENCY LOCK FILES (Optional - uncomment if using)
+# ============================================================================
+# poetry.lock
+# Pipfile.lock
+# package-lock.json
+# yarn.lock
+
+# ============================================================================
+# OS FILES
+# ============================================================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+*.icloud
+.TemporaryItems
+
+# Linux
+.directory
+
+# ============================================================================
+# DEVELOPMENT & DEBUG FILES
+# ============================================================================
+
+# Debug
+.debug/
+debug.log
+pdb.set_trace()
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pylint
+.pylintrc
+
+# isort
+.isort.cfg
+
+# Type checking
+.pytype/
+
+# ============================================================================
+# MACHINE LEARNING MODEL CACHE
+# ============================================================================
+
+# HuggingFace transformers cache
+~/.cache/huggingface/
+models/
+model_cache/
+.huggingface/
+.transformer_cache/
+pretrained_models/
+
+# ONNX model cache
+onnx_models/
+
+# ============================================================================
+# BUILD & DEPLOYMENT
+# ============================================================================
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Kubernetes
+kube-config
+.kube/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ============================================================================
+# MISC IGNORE
+# ============================================================================
+
+# Test artifacts
+test_output/
+test_results/
+test_reports/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.swp
+
+# IDE metadata
+.classpath
+.project
+.c9/
+*.launch
+.settings/
+
+# npm/yarn (if using Node.js tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ============================================================================
+# PROJECT SPECIFIC EXCLUSIONS
+# ============================================================================
+
+# Generated test data
+test_data/
+fixtures/
+
+# Temporary experiment files
+experiments/
+scratch/
+notes/
+
+# ============================================================================
+# ALLOW EXCEPTIONS (Files to KEEP in git)
+# ============================================================================
+
+# Keep example configurations
+!.env.example
+
+# Keep placeholder directories
+!data/input_pdfs/.gitkeep
+!data/extracted_text/.gitkeep
+!data/chunks/.gitkeep
+
+# Keep important config templates
+!src/config/example_settings.py
+
+# Keep test fixtures
+!tests/fixtures/
+!tests/fixtures/**
