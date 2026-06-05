@@ -16,7 +16,9 @@ The Research Paper Chat Bot enables researchers and students to:
 **Key Features:**
 
 - 📄 Batch PDF ingestion and processing
-- 🔍 Semantic search with vector embeddings
+- 🔀 Hybrid Retrieval (Dense + Sparse Search)
+- 🔎 BM25 Keyword-Based Retrieval
+- 📊 Reciprocal Rank Fusion (RRF) Ranking
 - 🤖 Local LLM-based question answering
 - 🖥️ CLI-based interaction
 - 🎨 Web UI (Planned)
@@ -50,19 +52,23 @@ The system follows a standard RAG (Retrieval-Augmented Generation) pipeline:
 ┌─────────────────────────────────────────────────────────────┐
 │                    RETRIEVAL PHASE                          │
 └─────────────────────────────────────────────────────────────┘
-    User Query
-         ↓
-    Query Embedding (HuggingFace)
-         ↓
-    Semantic Search (Chroma)
-         ↓
-    Top-K Retrieval (k=5 default)
-         ↓
-    Prompt Construction
-         ↓
-    Local LLM Inference
-         ↓
-    Answer with Source Attribution
+     User Query
+          ↓
+     Query Embedding (HuggingFace)
+          ↓
+     Dense Retrieval (Chroma)
+          ↓
+     Sparse Retrieval (BM25)
+          ↓
+     Reciprocal Rank Fusion (RRF)
+          ↓
+     Hybrid Top-K Retrieval
+          ↓
+     Prompt Construction
+          ↓
+     Local LLM Inference
+          ↓
+     Answer with Source Attribution
 ```
 
 ## 📁 Folder Structure
@@ -96,11 +102,12 @@ research_paper_chat_bot/
 │   │   ├── chunker.py                # Semantic text chunking
 │   │   └── build_vector_store.py     # Orchestrates ingestion
 │   │
-│   └── retrieval/                     # Query & answer generation
-│       ├── __init__.py
-│       ├── retriever.py              # Vector store query
-│       ├── prompt_builder.py         # Prompt engineering
-│       └── chat_logic.py             # LLM integration
+│   ├── retrieval/
+│   ├── retriever.py
+│   ├── bm25_retriever.py       # Sparse retrieval
+│   ├── hybrid_retriever.py     # Dense + BM25 + RRF fusion
+│   ├── prompt_builder.py
+│   └── chat_logic.py             # LLM integration
 ```
 
 ---
@@ -206,15 +213,6 @@ First, place PDF files in `data/input_pdfs/`, then run:
 ```bash
 # Run the full ingestion pipeline
 python -m src.ingestion.build_vector_store
-
-# Output:
-# [PDF LOADER] FOUND 20 PDF(s) in 'data/input_pdfs'
-# [INGESTION] PROCESSING PDF: paper1.pdf
-# [TEXT EXTRACTOR] Saved extracted text to: data/extracted_text/paper1_extracted.txt
-# [INGESTION] CREATED 47 chunks(s) for 'paper1.pdf'
-# ...
-# [INGESTION] TOTAL CHUNKS CREATED: 520
-# [VECTOR STORE] Added 520 chunks(s) to collection 'research_papers'
 ```
 
 **What happens:**
@@ -230,20 +228,6 @@ python -m src.ingestion.build_vector_store
 ```bash
 # CLI mode - ask a question
 python -m src.retrieval.chat_logic "What is the attention mechanism?"
-
-# Output:
-# [RETRIEVER] Querying for: 'What is the attention mechanism?' (top_k=5)
-# [RETRIEVER] Retrieved 5 chunk(s).
-# [QA] Question: What is the attention mechanism?
-#
-# ================================================================================
-# [QA] ANSWER
-# The attention mechanism is a neural network technique that allows models to
-# focus on different parts of the input when processing each output. It works by
-# computing attention weights for each input element, allowing the model to
-# dynamically emphasize relevant information...
-# [Source: transformer_paper.pdf]
-# ================================================================================
 ```
 
 ### 3. Retrieving Source Chunks
@@ -253,19 +237,6 @@ Test retrieval without LLM:
 ```bash
 python -m src.retrieval.retriever "What are transformers?"
 
-# Output:
-# [RETRIEVER] Querying for: 'What are transformers?'
-# [RETRIEVER] Retrieved 5 chunk(s).
-#
-# ============================================================
-# Chunk 1 | ID: transformer_paper_0
-# Source: transformer_paper
-# Score: 0.1234 (lower = more similar)
-# Metadata: {'pages': '1-2'}
-# Text Preview:
-# "Transformers are neural networks based on attention mechanisms
-#  instead of recurrence or convolution. They were introduced in the
-#  'Attention is All You Need' paper..."
 ```
 
 ### 5. Python API Usage
@@ -326,54 +297,9 @@ print(f"Model: {result['model_name']}")
 
 ---
 
-## 🔍 Understanding the RAG Pipeline
-
-### 1. Ingestion Phase
-
-**Input:** PDF research papers
-
-**Process:**
-
-1. **PDF Loader** - Opens PDF, validates format
-2. **Text Extractor** - Converts pages to plain text with page markers
-3. **Text Cleaner** - Normalizes whitespace, removes artifacts
-4. **Chunker** - Splits text into semantic chunks with overlap
-5. **Embedder** - Converts chunk text to 384-dimensional vectors
-6. **Vector Store** - Stores vectors with metadata for retrieval
-
-**Output:** Searchable vector database
-
-### 2. Retrieval Phase
-
-**Input:** User question (natural language)
-
-**Process:**
-
-1. **Query Embedding** - Convert question to same vector space as chunks
-2. **Semantic Search** - Find most similar chunks using cosine similarity
-3. **Ranking** - Sort by similarity score (lower = more similar)
-4. **Filtering** - Select top-K chunks (default K=5)
-
-**Output:** Most relevant document chunks
-
-### 3. Generation Phase
-
-**Input:** Question + Retrieved chunks
-
-**Process:**
-
-1. **Prompt Engineering** - Format question and chunks into structured prompt
-2. **LLM Inference** - Feed prompt to local language model
-3. **Answer Generation** - Model generates answer based on context
-4. **Source Attribution** - Include source document references
-
-**Output:** Final answer with sources
-
----
-
 ## 🚧 Project Status
 
-**Current Version:** v0.1.0 (Development Stage)
+**Current Version:** v0.2.0 (Development Stage)
 
 > **Note:** This repository is primarily a learning and engineering project focused on understanding and building Retrieval-Augmented Generation (RAG) systems from scratch. The current implementation prioritizes modularity, experimentation, and learning rather than production readiness.
 
@@ -388,8 +314,10 @@ The core RAG pipeline has been implemented and is currently under active testing
 - Sentence-Based Text Chunking
 - Hugging Face Embedding Generation
 - Chroma Vector Database Integration
-- Semantic Similarity Search
-- Top-K Document Retrieval
+- BM25 Sparse Retrieval
+- Hybrid Retrieval (Dense + Sparse)
+- Reciprocal Rank Fusion (RRF)
+- Hybrid Search Ranking Pipeline
 - Prompt Construction for RAG
 - Local Hugging Face LLM Integration
 - End-to-End Question Answering Workflow
@@ -465,7 +393,6 @@ The following components are planned for future development and are not fully im
 
 Potential future improvements include:
 
-- Hybrid Retrieval (Keyword + Semantic Search)
 - Multi-PDF Comparative Question Answering
 - Research Paper Metadata Extraction
 - Citation Tracking
@@ -491,3 +418,24 @@ The long-term goal is to transform this project from a learning-focused RAG impl
 - Operating as a scalable production-grade application
 
 As development continues, the project will evolve beyond the core RAG pipeline to include a full frontend, backend services, deployment infrastructure, evaluation systems, and advanced user-facing features.
+
+## Version History
+
+### v0.2.0
+
+* Added BM25 Sparse Retrieval
+* Added Hybrid Retrieval (Dense + Sparse Search)
+* Added Reciprocal Rank Fusion (RRF)
+* Improved retrieval quality for keyword-heavy queries
+* Enhanced ranking pipeline for research paper search
+
+### v0.1.0
+
+* Initial RAG pipeline
+* PDF ingestion
+* Text extraction
+* Chunking
+* Embedding generation
+* Chroma vector database
+* Dense semantic retrieval
+* Local LLM integration
