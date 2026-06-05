@@ -49,8 +49,8 @@ LLM_CONFIG = {
 
     # Lightweight local model
     # "model_name": "microsoft/Phi-3-mini-4k-instruct",
-    # "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
-    "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+    # "model_name": "Qwen/Qwen2.5-1.5B-Instruct", #large
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct",     #small
     "temperature": 0.2,
     "max_new_tokens": 512,
 }

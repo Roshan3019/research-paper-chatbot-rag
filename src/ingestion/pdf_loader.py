@@ -55,17 +55,24 @@ def load_all_pdfs(folder_path: str) -> List[Tuple[str, fitz.Document]]:
 
 
 #quick manual test - run this file directly to verify it works
-if __name__ == "__main__":
-    import sys
+# if __name__ == "__main__":
+#     import sys
 
-    #usage: python pdf_loader.py <path_to_pdf>
+#     #usage: python pdf_loader.py <path_to_pdf>
 
-    if len(sys.argv) < 2:
-        print("Usage: Python pdf_loader.py <path_to_pdf>")
-        sys.exit(1)
-    test_path = sys.argv[1]
-    document = pdf_loader(test_path)
+#     if len(sys.argv) < 2:
+#         print("Usage: Python pdf_loader.py <path_to_pdf>")
+#         sys.exit(1)
+#     test_path = sys.argv[1]
+#     document = pdf_loader(test_path)
 
-    print(f"\n[TEST] Document has {document.page_count} pages(s)")
-    print(f"[TEST] First Page object: {document[0]}")
+#     print(f"\n[TEST] Document has {document.page_count} pages(s)")
+#     print(f"[TEST] First Page object: {document[0]}")
     document.close()
+#for all pdf 
+if __name__ == "__main__":
+    from src.config.settings import INPUT_PDFS_DIR
+
+    docs = load_all_pdfs(INPUT_PDFS_DIR)
+
+    print(f"\nLoaded {len(docs)} PDF(s)")

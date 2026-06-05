@@ -136,7 +136,7 @@ data/vector_store/
 data/vector_store/**
 chroma.sqlite3
 chroma-*.db
-
+ARCHITECTURE.md
 # Extracted text files (regenerable)
 data/extracted_text/
 data/chunks/
@@ -330,3 +330,6 @@ notes/
 # Keep test fixtures
 !tests/fixtures/
 !tests/fixtures/**
+
+# Graphify generated files
+graphify-out/
