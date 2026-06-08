@@ -1,7 +1,8 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import sys
 from src.vector_store import query_collection
 from src.config.settings import VECTOR_STORE_CONFIG
+from .paper_filter import extract_paper_id, filter_chunks_by_paper
 
 class RetrieverChunk:
     """
@@ -41,24 +42,37 @@ class RetrieverChunk:
 
 def retriever(
         query_text: str,
-        top_k: int=VECTOR_STORE_CONFIG["default_top_k"]
+        top_k: int=VECTOR_STORE_CONFIG["default_top_k"],
+        paper_id: Optional[str] = None,
 ) -> List[RetrieverChunk]:
     if not query_text.strip():
         raise ValueError("Query text must not be empty.")
     
+    # Auto-detect paper ID if not provided
+    if paper_id is None:
+        paper_id = extract_paper_id(query_text)
+    
     print(f"\n[RETRIEVER]   Querying for : {query_text!r} (top_k = {top_k}) ")
+    if paper_id:
+        print(f"[PAPER FILTER] Filtered retrieval: enabled for paper '{paper_id}'")
 
     try: 
         raw_result = query_collection(
             query_text=query_text,
-            top_k=top_k
+            top_k=top_k,
+            paper_id=paper_id,
         )
     except Exception as e:
         raise RuntimeError(f"[RETRIEVER]    Chroma Query Failed: {e}")
     
-
-
-    return _parse_chroma_result(raw_result)
+    chunks = _parse_chroma_result(raw_result)
+    
+    # Apply paper filter if detected
+    if paper_id:
+        chunks = [c for c in chunks if c.source_doc == paper_id]
+        print(f"[PAPER FILTER] Filtered to {len(chunks)} chunk(s) matching paper '{paper_id}'")
+    
+    return chunks
 
 def _parse_chroma_result(raw_result : Dict[str, Any]) -> List[RetrieverChunk]:
     chunks: List[RetrieverChunk] = []
@@ -133,16 +147,17 @@ def print_retrieved_chunks(chunks: List[RetrieverChunk]) -> None:
 def retrieve_as_dicts(
     query_text: str,
     top_k: int = VECTOR_STORE_CONFIG["default_top_k"],
+    paper_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Same as retrieve(), but returns plain dicts instead of RetrievedChunk objects.
+    Same as retrieve(), but returns plain dicts instead of RetrieverChunk objects.
     Easier to pass to prompt-construction functions.
 
     Returns:
         List[Dict[str, Any]]: Each dict has keys:
             chunk_id, text, source_doc, metadata, score
     """
-    chunks = retriever(query_text=query_text, top_k=top_k)
+    chunks = retriever(query_text=query_text, top_k=top_k, paper_id=paper_id)
     return [
         {
             "chunk_id": c.chunk_id,

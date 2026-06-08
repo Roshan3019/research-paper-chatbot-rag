@@ -5,6 +5,7 @@ import os
 
 from src.retrieval.retriever import RetrieverChunk, retrieve_as_dicts
 from src.config.settings import VECTOR_STORE_CONFIG
+from .paper_filter import extract_paper_id
 
 #later implementation
 try:
@@ -102,8 +103,16 @@ def retriever_hybrid_as_dicts(
         top_k: int = VECTOR_STORE_CONFIG["default_top_k"],
         dense_k: Optional[int] = None,
         sparse_k: Optional[int] = None,
+        paper_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    #Hybrid Retrieval: BM25(Sparse) + Chroma(dense) + RRF fusino
+    #Hybrid Retrieval: BM25(Sparse) + Chroma(dense) + RRF fusion
+    
+    # Auto-detect paper ID if not provided
+    if paper_id is None:
+        paper_id = extract_paper_id(query_text)
+    
+    if paper_id:
+        print(f"[PAPER FILTER] Filtered retrieval: enabled for paper '{paper_id}'")
 
     if not query_text.strip():
         raise ValueError("Query Text must not be empty.")
@@ -114,18 +123,17 @@ def retriever_hybrid_as_dicts(
     if sparse_k is None:
         sparse_k = HYBRID_SPARSE_K
     
-
     print(f"\n[HYBRID RETRIEVER]    QUERYING HYBRID FOR: {query_text}")
     print(f"[HYBRID RETRIEVER]      dense_k = {dense_k}, sparse_k = {sparse_k}, top_k = {top_k}")
 
-    dense_results = retrieve_as_dicts(query_text=query_text, top_k=dense_k)
+    dense_results = retrieve_as_dicts(query_text=query_text, top_k=dense_k, paper_id=paper_id)
     
     if retriever_bm25_as_dicts is None:
         raise RuntimeError(
             "BM25 retriever not available"
             "Please implement BM25 retriever or adjust impmorts"
         )
-    sparse_results = retriever_bm25_as_dicts(query_text=query_text, top_k=sparse_k)
+    sparse_results = retriever_bm25_as_dicts(query_text=query_text, top_k=sparse_k, paper_id=paper_id)
 
     print(
         f"[HYBRID RETRIEVER]    DENSE RESULTS : {len(dense_results)}, "

@@ -3,7 +3,9 @@ from typing import List, Dict, Any, Optional
 import sys
 import re
 
+from .paper_filter import extract_paper_id
 from src.config.settings import VECTOR_STORE_CONFIG
+
 try:
     from rank_bm25 import BM25Okapi
 except ImportError as e:
@@ -164,15 +166,28 @@ def ensure_bm25_index_built() -> None:
 def retriever_bm25_as_dicts(
     query_text: str,
     top_k: int = VECTOR_STORE_CONFIG["default_top_k"],
+    paper_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     if not query_text.strip():
         raise ValueError("Query text must not be empty")
+    
+    # Auto-detect paper ID if not provided
+    if paper_id is None:
+        paper_id = extract_paper_id(query_text)
+    
+    if paper_id:
+        print(f"[PAPER FILTER] Filtered retrieval: enabled for paper '{paper_id}'")
 
     index = _get_bm25_index()
     results = index.get_top_n(
         query=query_text,
         n=top_k
     )
+    
+    # Apply paper filter post-retrieval (BM25 needs to search all chunks)
+    if paper_id:
+        results = [r for r in results if r.get("source_doc") == paper_id]
+        print(f"[PAPER FILTER] Filtered to {len(results)} chunk(s) matching paper '{paper_id}'")
 
     print(f"[BM25] retrieved {len(results)} chunk(s) with BM25")
     return results

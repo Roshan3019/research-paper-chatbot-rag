@@ -6,6 +6,10 @@
 # ============================================================================
 venv/
 .venv/
+.kilo
+.kilo/worktrees/dawn-beech
+.config/
+config
 env/
 ENV/
 build/

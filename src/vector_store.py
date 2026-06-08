@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import chromadb
 from chromadb.utils import embedding_functions
@@ -88,11 +88,19 @@ def add_chunks_to_collection(
 
 def query_collection(
         query_text: str,
-        top_k: int = VECTOR_STORE_CONFIG["default_top_k"]
+        top_k: int = VECTOR_STORE_CONFIG["default_top_k"],
+        paper_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     collection = get_or_create_collection()
+    
+    where_filter = None
+    if paper_id:
+        where_filter = {"source_doc": paper_id}
+        print(f"[VECTOR STORE] Applying where filter: {where_filter}")
+    
     result = collection.query(
         query_texts= [query_text],
         n_results = top_k,
+        where = where_filter,
     )
     return result

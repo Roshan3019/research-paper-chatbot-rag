@@ -3,7 +3,7 @@ import sys
 
 from transformers import pipeline
 
-from src.retrieval.retriever import retrieve_as_dicts
+from src.retrieval.hybrid_retriever import retriever_hybrid_as_dicts
 from src.retrieval.prompt_builder import build_plain_prompt
 from src.config.settings import (
     VECTOR_STORE_CONFIG,
@@ -38,9 +38,10 @@ class HFChatClient:
             max_new_tokens=self.max_new_tokens,
             temperature=self.temperature,
             do_sample=False,
+            return_full_text=False
         )
 
-        return response[0]["generated_text"]
+        return response[0]["generated_text"].strip()
 
 
 def _get_or_create_llm_client(model_name: str) -> HFChatClient:
@@ -61,6 +62,9 @@ def answer_question_with_hf(
     max_chunks: Optional[int] = None,
     max_chars_per_chunk: Optional[int] = None,
     model_name: str = LLM_CONFIG["model_name"],
+    dense_k: Optional[int] = None,
+    sparse_k: Optional[int] = None,
+    paper_id: Optional[str] = None,
 ) -> Dict[str, Any]:
 
     if not query_text.strip():
@@ -68,9 +72,12 @@ def answer_question_with_hf(
 
     print(f"\n[QA] Question: {query_text}")
 
-    chunks = retrieve_as_dicts(
+    chunks = retriever_hybrid_as_dicts(
         query_text=query_text,
         top_k=top_k,
+        dense_k=dense_k,
+        sparse_k=sparse_k,
+        paper_id=paper_id,
     )
 
     if max_chunks is None:
