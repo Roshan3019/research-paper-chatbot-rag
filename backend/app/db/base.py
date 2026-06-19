@@ -1,4 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from app.db.base_class import Base
 
-class Base(DeclarativeBase):
-    pass
+# Import all models for Alembic discovery
+from app.models.user import User
