@@ -54,7 +54,7 @@ def load_all_pdfs(folder_path: str) -> List[Tuple[str, fitz.Document]]:
     return loaded_docs
 
 
-#quick manual test - run this file directly to verify it works
+# quick manual test - run this file directly to verify it works
 # if __name__ == "__main__":
 #     import sys
 
@@ -68,11 +68,14 @@ def load_all_pdfs(folder_path: str) -> List[Tuple[str, fitz.Document]]:
 
 #     print(f"\n[TEST] Document has {document.page_count} pages(s)")
 #     print(f"[TEST] First Page object: {document[0]}")
-    document.close()
-#for all pdf 
+#     document.close()
+# for all pdf 
 if __name__ == "__main__":
     from src.config.settings import INPUT_PDFS_DIR
 
     docs = load_all_pdfs(INPUT_PDFS_DIR)
 
     print(f"\nLoaded {len(docs)} PDF(s)")
+
+    for _, doc in docs:
+        doc.close()

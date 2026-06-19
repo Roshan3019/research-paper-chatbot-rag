@@ -7,7 +7,6 @@ from src.retrieval.retriever import RetrieverChunk, retrieve_as_dicts
 from src.config.settings import VECTOR_STORE_CONFIG
 from .paper_filter import extract_paper_id
 
-#later implementation
 try:
     from .bm25_retriever import retriever_bm25_as_dicts
 
@@ -147,7 +146,7 @@ def retriever_hybrid_as_dicts(
         top_k=top_k
     )
 
-    print(f"[HYRBID RETRIEVER]  HYRBID RESULTS: {len(hybrid_results)}")
+    print(f"[HYBRID RETRIEVER]  HYBRID RESULTS: {len(hybrid_results)}")
     return hybrid_results
 
 def retrieve_hybrid(

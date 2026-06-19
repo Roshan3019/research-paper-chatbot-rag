@@ -64,3 +64,8 @@ VECTOR_STORE_CONFIG = {
 
     "default_top_k": 5,
 }
+
+EVALUATION_CONFIG = {
+    "top_k": 5,
+    "k_values": [1, 3, 5, 10],
+}

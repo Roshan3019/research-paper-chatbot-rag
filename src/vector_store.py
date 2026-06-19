@@ -3,11 +3,10 @@ from typing import List, Dict, Any, Optional
 import chromadb
 from chromadb.utils import embedding_functions
 
-from src.config.settings import(
+from src.config.settings import (
     VECTOR_STORE_CONFIG,
     EMBEDDING_CONFIG
 )
-# from .embedding import EmbeddingModel
 
 def get_chroma_client() -> chromadb.PersistentClient:
     client = chromadb.PersistentClient(path=str(VECTOR_STORE_CONFIG["persist_directory"]))

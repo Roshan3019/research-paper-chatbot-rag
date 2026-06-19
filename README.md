@@ -4,7 +4,7 @@ A Retrieval-Augmented Generation (RAG) system for querying and analyzing academi
 
 ## 🎯 Project Overview
 
-> ⚠️ This project is currently in active development. The core RAG pipeline is functional, while features such as advanced text cleaning, model evaluation, UI/UX, backend services, and public deployment are still under development.
+> ⚠️ This project is currently in active development. The core RAG pipeline is functional, while features such as advanced text cleaning, UI/UX, backend services, and public deployment are still under development.
 
 The Research Paper Chat Bot enables researchers and students to:
 
@@ -19,6 +19,7 @@ The Research Paper Chat Bot enables researchers and students to:
 - 🔀 Hybrid Retrieval (Dense + Sparse Search)
 - 🔎 BM25 Keyword-Based Retrieval
 - 📊 Reciprocal Rank Fusion (RRF) Ranking
+- 📈 Retrieval evaluation and benchmarking
 - 🤖 Local LLM-based question answering
 - 🖥️ CLI-based interaction
 - 🎨 Web UI (Planned)
@@ -29,85 +30,164 @@ The Research Paper Chat Bot enables researchers and students to:
 
 ## 🏗️ Architecture
 
-The system follows a standard RAG (Retrieval-Augmented Generation) pipeline:
+Graphify analysis of the current repository shows the system as a modular RAG pipeline with **105 extracted nodes**, **216 edges**, **10 detected communities**, and **no import cycles**. The most connected bridge in the architecture is `retriever_hybrid_as_dicts()` in `src/retrieval/hybrid_retriever.py`, because it connects dense retrieval, sparse BM25 retrieval, paper filtering, RRF fusion, QA, and evaluation.
+
+The system follows this pipeline:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    INGESTION PHASE                          │
-└─────────────────────────────────────────────────────────────┘
-    PDF Files (input_pdfs/)
-         ↓
-    PDF Loader (PyMuPDF)
-         ↓
-    Text Extraction (extract_text/)
-         ↓
-    Text Cleaning & Preprocessing (Planned)
-         ↓
-    Semantic Chunking (chunks/)
-         ↓
-    Embedding Generation (HuggingFace)
-         ↓
-    Vector Store (Chroma DB)
-
-┌─────────────────────────────────────────────────────────────┐
-│                    RETRIEVAL PHASE                          │
-└─────────────────────────────────────────────────────────────┘
-     User Query
-          ↓
-     Query Embedding (HuggingFace)
-          ↓
-     Dense Retrieval (Chroma)
-          ↓
-     Sparse Retrieval (BM25)
-          ↓
-     Reciprocal Rank Fusion (RRF)
-          ↓
-     Hybrid Top-K Retrieval
-          ↓
-     Prompt Construction
-          ↓
-     Local LLM Inference
-          ↓
-     Answer with Source Attribution
+PDF / text corpus
+  ↓
+Ingestion
+  ├── src/ingestion/pdf_loader.py
+  ├── src/ingestion/text_extractor.py
+  └── src/ingestion/chunker.py
+  ↓
+Persistent vector store
+  ├── src/vector_store.py
+  └── Chroma DB
+  ↓
+Retrieval
+  ├── Dense retrieval: src/retrieval/retriever.py
+  ├── Sparse retrieval: src/retrieval/bm25_retriever.py
+  ├── Paper filtering: src/retrieval/paper_filter.py
+  └── Hybrid retrieval + RRF: src/retrieval/hybrid_retriever.py
+  ↓
+RAG prompt construction
+  └── src/retrieval/prompt_builder.py
+  ↓
+Local Hugging Face generation
+  └── src/retrieval/chat_logic.py
+  ↓
+Answer with retrieved source chunks
 ```
+
+### Architecture communities
+
+The current graphify-detected communities map to these responsibilities:
+
+1. **Hybrid retrieval and paper filtering**
+   - `retriever_hybrid_as_dicts()`
+   - `retrieve_hybrid()`
+   - `_merge_results_rrf()`
+   - `_build_rank_map()`
+   - `_rrf_score()`
+   - `filter_chunks_by_paper()`
+   - `extract_paper_id()`
+
+2. **Evaluation and benchmarking**
+   - `evaluate_retrieval()`
+   - `compare_retrieval_methods()`
+   - `print_metrics_comparison()`
+   - `run_benchmark()`
+   - `save_benchmark_results()`
+   - `print_benchmark_summary()`
+   - `BenchmarkResult`
+
+3. **Ingestion and chunking**
+   - `pdf_loader()`
+   - `load_all_pdfs()`
+   - `extract_page_text()`
+   - `extract_and_save_document_text()`
+   - `build_chunks_from_sentences()`
+   - `chunk_document_text()`
+   - `build_chunks_for_all_pdfs()`
+   - `split_text_into_sentences()`
+
+4. **QA and LLM orchestration**
+   - `main()`
+   - `answer_question_with_hf()`
+   - `_get_or_create_llm_client()`
+   - `HFChatClient`
+
+5. **BM25 sparse retrieval**
+   - `BM25Index`
+   - `_get_bm25_index()`
+   - `ensure_bm25_index_built()`
+   - `load_all_chunks()`
+   - `_tokenization()`
+   - `retriever_bm25_as_dicts()`
+
+6. **Chroma vector store**
+   - `PersistentClient`
+   - `get_chroma_client()`
+   - `get_or_create_collection()`
+   - `get_embedding_function()`
+   - `add_chunks_to_collection()`
+   - `query_collection()`
+
+7. **Prompt construction**
+   - `build_chat_prompt()`
+   - `build_plain_prompt()`
+   - `build_content_block()`
+
+### Main runtime entry point
+
+`rag_query.py` is the current CLI entry point. It orchestrates the end-to-end flow:
+
+```text
+rag_query.py
+  ├── retriever_hybrid_as_dicts()
+  ├── answer_question_with_hf()
+  └── compare_retrieval_methods()
+```
+
+It supports:
+
+- normal hybrid retrieval
+- hybrid retrieval plus LLM answer generation
+- retrieval evaluation with ground-truth chunk IDs
+- `--no-llm` mode for retrieval-only debugging
 
 ## 📁 Folder Structure
 
 ```
 research_paper_chat_bot/
-├── README.md                           # This file
-├── REPOSITORY_READINESS_REPORT.md     # Detailed analysis & issues
-├── requirements.txt                    # Python dependencies
-├── .gitignore                          # Git ignore rules
-├── bootstrap_project.py                # Initial project scaffolding
+├── README.md
+├── REPOSITORY_READINESS_REPORT.md
+├── requirements.txt
+├── .gitignore
+├── bootstrap_project.py
+├── rag_query.py                         # CLI entry point for query + QA + optional evaluation
 │
-├── data/                               # Data directory (not in git)
-│   ├── input_pdfs/                    # Raw PDF files upload location
-│   ├── extracted_text/                # Extracted text (by pdf_loader)
-│   ├── chunks/                        # Document chunks for debugging
-│   └── vector_store/                  # Chroma persistent database
+├── data/
+│   ├── input_pdfs/                      # Raw PDF files
+│   ├── extracted_text/                  # Extracted text outputs
+│   ├── chunks/                          # Debug chunk outputs
+│   └── vector_store/                    # Persistent Chroma DB
 │
-├── src/                                # Source code
-│   ├── __init__.py                    # Package initialization
-│   ├── vector_store.py                # Vector store management
+├── src/
+│   ├── __init__.py
+│   ├── vector_store.py                  # Chroma client, embeddings, collection, add/query helpers
 │   │
 │   ├── config/
 │   │   ├── __init__.py
-│   │   └── settings.py                # Configuration (paths, models, params)
+│   │   └── settings.py                  # Paths, models, chunking, vector store settings
 │   │
-│   ├── ingestion/                     # Data ingestion pipeline
+│   ├── ingestion/
 │   │   ├── __init__.py
-│   │   ├── pdf_loader.py             # PDF file loader
-│   │   ├── text_extractor.py         # Text extraction from PDFs
-│   │   ├── chunker.py                # Semantic text chunking
-│   │   └── build_vector_store.py     # Orchestrates ingestion
+│   │   ├── pdf_loader.py                # PDF discovery and loading
+│   │   ├── text_extractor.py            # PDF text extraction and saved text outputs
+│   │   ├── chunker.py                   # Sentence-based chunking
+│   │   └── build_vector_store.py        # Ingestion orchestration: PDFs → text → chunks → Chroma
 │   │
 │   ├── retrieval/
-│   ├── retriever.py
-│   ├── bm25_retriever.py       # Sparse retrieval
-│   ├── hybrid_retriever.py     # Dense + BM25 + RRF fusion
-│   ├── prompt_builder.py
-│   └── chat_logic.py             # LLM integration
+│   │   ├── __init__.py
+│   │   ├── retriever.py                 # Dense Chroma retrieval and RetrieverChunk wrapper
+│   │   ├── bm25_retriever.py            # Sparse BM25 retrieval over stored chunks
+│   │   ├── hybrid_retriever.py          # Dense + BM25 + RRF fusion
+│   │   ├── paper_filter.py              # arXiv-style paper ID extraction/filtering
+│   │   ├── prompt_builder.py            # RAG prompt construction
+│   │   └── chat_logic.py                # Local Hugging Face QA orchestration
+│   │
+│   └── evaluation/
+│       ├── __init__.py
+│       ├── evaluator.py                 # Retrieval metrics and dense/sparse/hybrid comparison
+│       └── benchmark.py                 # Benchmark execution and result persistence
+│
+└── graphify-out/
+    ├── graph.html                       # Generated architecture graph visualization
+    ├── GRAPH_REPORT.md                  # Generated architecture report
+    └── graph.json                       # Raw graph data
 ```
 
 ---
@@ -208,10 +288,9 @@ Pre-configured lightweight models:
 
 ### 1. Ingesting Papers (Data Pipeline)
 
-First, place PDF files in `data/input_pdfs/`, then run:
+Place PDF files in `data/input_pdfs/`, then run:
 
 ```bash
-# Run the full ingestion pipeline
 python -m src.ingestion.build_vector_store
 ```
 
@@ -219,37 +298,65 @@ python -m src.ingestion.build_vector_store
 
 1. Loads all PDFs from `data/input_pdfs/`
 2. Extracts text to `data/extracted_text/`
-3. Chunks text with overlap
-4. Generates embeddings
-5. Stores in Chroma vector DB
+3. Chunks text using `src/ingestion/chunker.py`
+4. Creates or opens the Chroma collection
+5. Adds chunk documents with source metadata to the vector store
 
-### 2. Asking Questions (Retrieval + QA)
+### 2. Asking Questions (Hybrid Retrieval + QA)
 
-```bash
-# CLI mode - ask a question
-python -m src.retrieval.chat_logic "What is the attention mechanism?"
-```
-
-### 3. Retrieving Source Chunks
-
-Test retrieval without LLM:
+Use the main CLI entry point:
 
 ```bash
-python -m src.retrieval.retriever "What are transformers?"
-
+python rag_query.py "What is the attention mechanism?" --top-k 5
 ```
+
+This runs hybrid retrieval through:
+
+```text
+rag_query.py
+  → retriever_hybrid_as_dicts()
+  → answer_question_with_hf()
+```
+
+The answer is generated by the local Hugging Face chat client configured in `src/config/settings.py`.
+
+### 3. Retrieval-Only Debugging
+
+Skip LLM generation and inspect retrieved chunks:
+
+```bash
+python rag_query.py "What are transformers?" --top-k 5 --no-llm
+```
+
+This prints the hybrid retrieval results and scores without generating an answer.
+
+### 4. Evaluating Retrieval
+
+Run retrieval evaluation with ground-truth chunk IDs:
+
+```bash
+python rag_query.py "What is the attention mechanism?" \
+  --top-k 5 \
+  --evaluate \
+  --ground-truth paperA_0 paperB_2 paperC_1
+```
+
+This compares dense, sparse, and hybrid retrieval using metrics from `src/evaluation/evaluator.py`:
+
+- Precision@K
+- Recall@K
+- MRR
+- nDCG@K
 
 ### 5. Python API Usage
 
 ```python
 from src.retrieval.chat_logic import answer_question_with_hf
-from src.config.settings import VECTOR_STORE_CONFIG
 
-# Ask a question
 result = answer_question_with_hf(
     query_text="Explain the transformer architecture",
-    top_k=5,  # Use top 5 chunks
-    max_chunks=3,  # Include only 3 in prompt
+    top_k=5,
+    max_chunks=3,
 )
 
 print(f"Answer: {result['answer']}")
@@ -318,6 +425,7 @@ The core RAG pipeline has been implemented and is currently under active testing
 - Hybrid Retrieval (Dense + Sparse)
 - Reciprocal Rank Fusion (RRF)
 - Hybrid Search Ranking Pipeline
+- Retrieval Evaluation and Benchmarking
 - Prompt Construction for RAG
 - Local Hugging Face LLM Integration
 - End-to-End Question Answering Workflow
@@ -353,10 +461,14 @@ The following components are planned for future development and are not fully im
 - Better text normalization
 - Improved document quality before chunking
 
-### 2. Model Evaluation Framework
+### 2. Evaluation Framework Improvements
 
-- Retrieval quality evaluation
-- RAG benchmarking metrics
+The basic retrieval evaluation framework exists through `src/evaluation/evaluator.py` and `src/evaluation/benchmark.py`, including Precision@K, Recall@K, MRR, nDCG@K, and dense/sparse/hybrid comparison.
+
+Future improvements:
+
+- Larger benchmark datasets
+- Ground-truth creation tooling
 - Embedding model comparison
 - LLM answer quality assessment
 - Experiment tracking and reporting

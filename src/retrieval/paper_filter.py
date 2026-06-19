@@ -38,7 +38,6 @@ def filter_chunks_by_paper(
     return filtered
 
 if __name__ == "__main__":
-    # Test cases
     test_queries = [
         "What is the main contribution of paper 2510.06186v2?",
         "Tell me about RECODE-H benchmark",
